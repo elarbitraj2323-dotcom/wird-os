@@ -7,29 +7,56 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#f8f9fa">
+    <meta name="theme-color" content="#ffffff">
     <meta name="description" content="Личная операционная система дисциплины верующего">
 </head>
 <body>
+    <!-- Animated Background -->
+    <div class="background">
+        <div class="background-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+            <div class="blob blob-3"></div>
+            <div class="blob blob-4"></div>
+        </div>
+        <div class="background-grid"></div>
+        <div class="background-grain"></div>
+    </div>
+
     <div class="container">
         <!-- Экран истории (скрыт по умолчанию) -->
         <div id="historyScreen" class="screen history-screen" style="display: none;">
             <header class="header">
                 <button id="backToTodayBtn" class="back-btn">
-                    ← Назад
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Назад</span>
                 </button>
-                <h1 class="app-title">История дней</h1>
+                <div class="header-center">
+                    <h1 class="app-title">История</h1>
+                </div>
             </header>
 
             <main class="history-content">
                 <div class="history-controls">
                     <div class="history-stats">
-                        <span id="totalDaysCount">0 дней</span>
-                        <span id="completedDaysCount">0 завершено</span>
+                        <div class="stat">
+                            <span class="stat-value" id="totalDaysCount">0</span>
+                            <span class="stat-label">дней</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value" id="completedDaysCount">0</span>
+                            <span class="stat-label">завершено</span>
+                        </div>
                     </div>
                     <button id="copyYesterdayBtn" class="secondary-btn" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
                         Копировать вчера
                     </button>
                 </div>
@@ -37,7 +64,14 @@
                 <div class="days-list" id="daysList">
                     <!-- Дни будут загружаться динамически -->
                     <div class="empty-history">
-                        <div class="empty-icon">📅</div>
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
                         <h3>История пуста</h3>
                         <p>Здесь будут появляться ваши завершённые и активные дни</p>
                     </div>
@@ -54,7 +88,13 @@
                 </div>
                 <div class="header-right">
                     <button id="historyBtn" class="history-btn">
-                        История
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <span>История</span>
                     </button>
                 </div>
             </header>
@@ -63,6 +103,11 @@
                 <!-- Аят/Цитата дня -->
                 <section class="daily-quote-section">
                     <div class="quote-card glass-card">
+                        <div class="quote-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M10 11h6M10 16h6M14 6h-4a4 4 0 0 0-4 4v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-8a4 4 0 0 0-4-4z"/>
+                            </svg>
+                        </div>
                         <div class="quote-content">
                             <p id="dailyQuoteText">Загружаем цитату дня...</p>
                             <p id="dailyQuoteSource" class="quote-source"></p>
@@ -74,15 +119,31 @@
                 <div class="blocks-container">
                     <!-- Ибадат -->
                     <section class="block-section">
-                        <h2 class="block-title">🕌 Ибадат</h2>
+                        <div class="block-header">
+                            <div class="block-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <h2 class="block-title">Ибадат</h2>
+                        </div>
                         <div class="block-content glass-card">
                             <!-- Коран -->
                             <div class="input-group">
                                 <label class="input-label">Коран (страниц)</label>
                                 <div class="number-input-container">
-                                    <button class="number-btn minus" data-action="quran-decrease">-</button>
+                                    <button class="number-btn minus" data-action="quran-decrease">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                    </button>
                                     <input type="number" id="quranInput" class="number-input" min="0" max="30" value="0">
-                                    <button class="number-btn plus" data-action="quran-increase">+</button>
+                                    <button class="number-btn plus" data-action="quran-increase">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
 
@@ -90,11 +151,17 @@
                             <div class="checkbox-group">
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="azkarMorning">
-                                    <label for="azkarMorning" class="checkbox-label">Азкар утро</label>
+                                    <label for="azkarMorning" class="checkbox-label">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Азкар утро</span>
+                                    </label>
                                 </div>
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="azkarEvening">
-                                    <label for="azkarEvening" class="checkbox-label">Азкар вечер</label>
+                                    <label for="azkarEvening" class="checkbox-label">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Азкар вечер</span>
+                                    </label>
                                 </div>
                             </div>
 
@@ -104,12 +171,26 @@
                                 <div class="counter-container">
                                     <div class="counter-display" id="salawatCount">0</div>
                                     <div class="counter-buttons">
-                                        <button class="counter-btn" data-action="salawat-add" data-amount="1">+1</button>
-                                        <button class="counter-btn" data-action="salawat-add" data-amount="10">+10</button>
-                                        <button class="counter-btn" data-action="salawat-add" data-amount="33">+33</button>
-                                        <button class="counter-btn" data-action="salawat-add" data-amount="100">+100</button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="1">
+                                            <span>+1</span>
+                                        </button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="10">
+                                            <span>+10</span>
+                                        </button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="33">
+                                            <span>+33</span>
+                                        </button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="100">
+                                            <span>+100</span>
+                                        </button>
                                     </div>
-                                    <button class="counter-reset" id="resetSalawat">Сбросить</button>
+                                    <button class="counter-reset" id="resetSalawat">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 12a9 9 0 1 1-9-9"/>
+                                            <path d="M21 3v6h-6"/>
+                                        </svg>
+                                        Сбросить
+                                    </button>
                                 </div>
                             </div>
 
@@ -117,7 +198,10 @@
                             <div class="checkbox-group">
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="sadaka">
-                                    <label for="sadaka" class="checkbox-label">Садака</label>
+                                    <label for="sadaka" class="checkbox-label">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Садака</span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -125,15 +209,32 @@
 
                     <!-- Дисциплина -->
                     <section class="block-section">
-                        <h2 class="block-title">🧠 Дисциплина</h2>
+                        <div class="block-header">
+                            <div class="block-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                            </div>
+                            <h2 class="block-title">Дисциплина</h2>
+                        </div>
                         <div class="block-content glass-card">
                             <!-- Сон -->
                             <div class="input-group">
                                 <label class="input-label">Сон (часов)</label>
                                 <div class="number-input-container">
-                                    <button class="number-btn minus" data-action="sleep-decrease">-</button>
+                                    <button class="number-btn minus" data-action="sleep-decrease">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                    </button>
                                     <input type="number" id="sleepInput" class="number-input" min="0" max="24" value="0" step="0.5">
-                                    <button class="number-btn plus" data-action="sleep-increase">+</button>
+                                    <button class="number-btn plus" data-action="sleep-increase">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
 
@@ -141,7 +242,10 @@
                             <div class="checkbox-group">
                                 <div class="checkbox-item">
                                     <input type="checkbox" id="sport">
-                                    <label for="sport" class="checkbox-label">Спорт</label>
+                                    <label for="sport" class="checkbox-label">
+                                        <span class="checkbox-custom"></span>
+                                        <span class="checkbox-text">Спорт</span>
+                                    </label>
                                 </div>
                             </div>
 
@@ -155,7 +259,16 @@
 
                     <!-- Самоконтроль -->
                     <section class="block-section">
-                        <h2 class="block-title">🤍 Самоконтроль</h2>
+                        <div class="block-header">
+                            <div class="block-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+                                    <line x1="16" y1="8" x2="2" y2="22"/>
+                                    <line x1="17.5" y1="15" x2="9" y2="15"/>
+                                </svg>
+                            </div>
+                            <h2 class="block-title">Самоконтроль</h2>
+                        </div>
                         <div class="block-content glass-card">
                             <div class="self-control-group">
                                 <!-- Язык -->
@@ -163,10 +276,17 @@
                                     <span class="self-control-label">Язык</span>
                                     <div class="toggle-group">
                                         <button class="toggle-btn success" data-action="self-control" data-type="language" data-value="preserved">
-                                            Сохранил
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            <span>Сохранил</span>
                                         </button>
                                         <button class="toggle-btn failure" data-action="self-control" data-type="language" data-value="failed">
-                                            Сорвался
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                            <span>Сорвался</span>
                                         </button>
                                     </div>
                                 </div>
@@ -176,10 +296,17 @@
                                     <span class="self-control-label">Взгляд</span>
                                     <div class="toggle-group">
                                         <button class="toggle-btn success" data-action="self-control" data-type="gaze" data-value="preserved">
-                                            Сохранил
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            <span>Сохранил</span>
                                         </button>
                                         <button class="toggle-btn failure" data-action="self-control" data-type="gaze" data-value="failed">
-                                            Сорвался
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                            <span>Сорвался</span>
                                         </button>
                                     </div>
                                 </div>
@@ -189,10 +316,17 @@
                                     <span class="self-control-label">Гнев</span>
                                     <div class="toggle-group">
                                         <button class="toggle-btn success" data-action="self-control" data-type="anger" data-value="preserved">
-                                            Сохранил
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            <span>Сохранил</span>
                                         </button>
                                         <button class="toggle-btn failure" data-action="self-control" data-type="anger" data-value="failed">
-                                            Сорвался
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                            <span>Сорвался</span>
                                         </button>
                                     </div>
                                 </div>
@@ -206,34 +340,53 @@
                     <div class="day-info">
                         <div class="day-status" id="dayStatus">День активен</div>
                         <div id="viewingHistoryIndicator" class="history-indicator" style="display: none;">
-                            Просмотр записи из истории
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                            </svg>
+                            <span>Просмотр записи</span>
                         </div>
                     </div>
                     
                     <div class="action-buttons">
                         <button id="deleteDayBtn" class="delete-btn" style="display: none;">
-                            Удалить
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                            <span>Удалить</span>
                         </button>
                         <button id="editDayBtn" class="edit-btn" style="display: none;">
-                            Редактировать
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                            <span>Редактировать</span>
                         </button>
                         <button id="cancelEditBtn" class="cancel-btn" style="display: none;">
-                            Отменить
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Отменить</span>
                         </button>
                         <button id="saveChangesBtn" class="save-btn" style="display: none;">
-                            Сохранить
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Сохранить</span>
                         </button>
                         <button id="completeDayBtn" class="complete-day-btn">
                             <span class="btn-text">Завершить день</span>
-                            <span class="btn-icon">✓</span>
+                            <span class="btn-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </span>
                         </button>
                     </div>
                 </div>
             </main>
-
-            <footer class="footer">
-                <div class="footer-text">WIRD OS — Личная операционная система дисциплины</div>
-            </footer>
         </div>
     </div>
 
