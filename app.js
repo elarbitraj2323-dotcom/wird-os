@@ -1,5 +1,5 @@
 // WIRD OS - Stage 1.1: История дней + редактирование
-// С обновленным премиальным UI
+// С премиум темной темой и анимированным фоном
 
 document.addEventListener('DOMContentLoaded', function() {
     // ======================
@@ -61,42 +61,244 @@ document.addEventListener('DOMContentLoaded', function() {
     ];
     
     // ======================
-    // ИНИЦИАЛИЗАЦИЯ АНИМАЦИИ ФОНА
+    // СИСТЕМА АНИМИРОВАННОГО ФОНА
     // ======================
     
-    function initBackgroundAnimation() {
-        // Проверяем настройки prefers-reduced-motion
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    class NightSkyBackground {
+        constructor() {
+            this.canvas = document.getElementById('bgCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.time = 0;
+            this.stars = [];
+            this.waveOffset = 0;
+            this.moonPhase = 0.3; // Серп луны (0.3 = тонкий серп)
+            
+            this.init();
+            this.animate();
+            window.addEventListener('resize', () => this.resize());
+        }
         
-        if (!prefersReducedMotion) {
-            // Добавляем параллакс эффект для blobs при движении мыши
-            document.addEventListener('mousemove', (e) => {
-                const x = e.clientX / window.innerWidth;
-                const y = e.clientY / window.innerHeight;
-                
-                const blobs = document.querySelectorAll('.blob');
-                blobs.forEach((blob, index) => {
-                    const speed = 0.3 + (index * 0.1);
-                    const moveX = (x - 0.5) * 40 * speed;
-                    const moveY = (y - 0.5) * 40 * speed;
-                    
-                    blob.style.transform = `translate(${moveX}px, ${moveY}px)`;
+        init() {
+            this.resize();
+            this.createStars();
+        }
+        
+        resize() {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+            this.createStars(); // Пересоздаем звезды при ресайзе
+        }
+        
+        createStars() {
+            this.stars = [];
+            const starCount = Math.min(200, Math.floor((this.width * this.height) / 4000));
+            
+            for (let i = 0; i < starCount; i++) {
+                this.stars.push({
+                    x: Math.random() * this.width,
+                    y: Math.random() * (this.height * 0.7), // Только в верхней части (небо)
+                    size: Math.random() * 1.5 + 0.5,
+                    brightness: Math.random() * 0.8 + 0.2,
+                    speed: Math.random() * 0.2 + 0.1,
+                    twinkleSpeed: Math.random() * 0.05 + 0.02
                 });
+            }
+        }
+        
+        drawBackground() {
+            // Ночное небо с градиентом
+            const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+            gradient.addColorStop(0, '#0a1128'); // Темный индиго сверху
+            gradient.addColorStop(0.5, '#1a237e'); // Глубокий синий
+            gradient.addColorStop(1, '#0d47a1'); // Синий у горизонта
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.fillRect(0, 0, this.width, this.height);
+        }
+        
+        drawStars() {
+            this.ctx.fillStyle = '#ffffff';
+            
+            this.stars.forEach(star => {
+                // Мерцание звезд
+                const twinkle = Math.sin(this.time * star.twinkleSpeed) * 0.3 + 0.7;
+                const alpha = star.brightness * twinkle;
+                
+                this.ctx.globalAlpha = alpha;
+                this.ctx.beginPath();
+                this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Медленный дрейф звезд
+                star.y += star.speed * 0.05;
+                if (star.y > this.height * 0.7) {
+                    star.y = 0;
+                    star.x = Math.random() * this.width;
+                }
             });
             
-            // Анимация градиента сетки
-            const grid = document.querySelector('.background-grid');
-            let gridAngle = 0;
+            this.ctx.globalAlpha = 1;
+        }
+        
+        drawMoon() {
+            const moonX = this.width * 0.8;
+            const moonY = this.height * 0.2;
+            const moonRadius = this.width * 0.05;
             
-            function animateGrid() {
-                gridAngle = (gridAngle + 0.05) % 360;
-                grid.style.backgroundImage = 
-                    `linear-gradient(${gridAngle}deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-                     linear-gradient(${gridAngle + 90}deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px)`;
-                requestAnimationFrame(animateGrid);
+            // Серп луны
+            this.ctx.save();
+            this.ctx.translate(moonX, moonY);
+            
+            // Внешний круг (свечение)
+            const glow = this.ctx.createRadialGradient(0, 0, 0, 0, 0, moonRadius * 2.5);
+            glow.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            this.ctx.fillStyle = glow;
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, moonRadius * 2.5, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Основная луна (серп)
+            this.ctx.fillStyle = '#f8f8f8';
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, moonRadius, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Тень на луне для создания серпа
+            this.ctx.fillStyle = '#0a1128';
+            this.ctx.beginPath();
+            this.ctx.arc(
+                moonRadius * 0.6, 
+                0, 
+                moonRadius * 0.9, 
+                0, 
+                Math.PI * 2
+            );
+            this.ctx.fill();
+            
+            this.ctx.restore();
+        }
+        
+        drawSea() {
+            const seaLevel = this.height * 0.7;
+            
+            // Градиент моря
+            const seaGradient = this.ctx.createLinearGradient(0, seaLevel, 0, this.height);
+            seaGradient.addColorStop(0, '#1a237e'); // Темный синий
+            seaGradient.addColorStop(0.5, '#0d47a1'); // Синий
+            seaGradient.addColorStop(1, '#1565c0'); // Светлый синий
+            
+            this.ctx.fillStyle = seaGradient;
+            this.ctx.fillRect(0, seaLevel, this.width, this.height - seaLevel);
+            
+            // Волны
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            this.ctx.lineWidth = 2;
+            
+            for (let i = 0; i < 3; i++) {
+                this.ctx.beginPath();
+                const waveHeight = 10 + i * 5;
+                
+                for (let x = 0; x <= this.width; x += 10) {
+                    const y = seaLevel + 
+                        Math.sin((x + this.waveOffset * (i + 1)) * 0.01 + i) * waveHeight;
+                    
+                    if (x === 0) {
+                        this.ctx.moveTo(x, y);
+                    } else {
+                        this.ctx.lineTo(x, y);
+                    }
+                }
+                
+                this.ctx.stroke();
             }
             
-            animateGrid();
+            // Световая дорожка от луны
+            const lightGradient = this.ctx.createLinearGradient(
+                this.width * 0.8, seaLevel, 
+                this.width * 0.8, this.height
+            );
+            lightGradient.addColorStop(0, 'rgba(76, 201, 240, 0.3)');
+            lightGradient.addColorStop(1, 'rgba(76, 201, 240, 0)');
+            
+            this.ctx.fillStyle = lightGradient;
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.width * 0.7, seaLevel);
+            this.ctx.lineTo(this.width * 0.9, seaLevel);
+            this.ctx.lineTo(this.width * 0.9, this.height);
+            this.ctx.lineTo(this.width * 0.7, this.height);
+            this.ctx.closePath();
+            this.ctx.fill();
+            
+            // Блики на воде
+            this.ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            for (let i = 0; i < 5; i++) {
+                const x = Math.random() * this.width;
+                const y = seaLevel + Math.random() * (this.height - seaLevel) * 0.5;
+                const size = Math.random() * 3 + 1;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, size, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+        }
+        
+        drawHorizonMist() {
+            const mistHeight = this.height * 0.3;
+            
+            // Туман у горизонта
+            const mistGradient = this.ctx.createLinearGradient(0, this.height * 0.5, 0, this.height);
+            mistGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            mistGradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+            
+            this.ctx.fillStyle = mistGradient;
+            this.ctx.fillRect(0, this.height * 0.5, this.width, mistHeight);
+        }
+        
+        drawGrain() {
+            // Тонкий шумовой эффект для премиум-визуала
+            const grainOpacity = 0.02;
+            const imageData = this.ctx.createImageData(this.width, this.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const value = Math.random() * 255;
+                data[i] = value;     // R
+                data[i + 1] = value; // G
+                data[i + 2] = value; // B
+                data[i + 3] = grainOpacity * 255; // Alpha
+            }
+            
+            this.ctx.putImageData(imageData, 0, 0);
+        }
+        
+        animate() {
+            // Проверяем настройки prefers-reduced-motion
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            
+            if (!prefersReducedMotion) {
+                this.time += 0.05;
+                this.waveOffset += 1;
+            }
+            
+            // Очищаем canvas
+            this.ctx.clearRect(0, 0, this.width, this.height);
+            
+            // Рисуем все слои
+            this.drawBackground();
+            this.drawStars();
+            this.drawMoon();
+            this.drawSea();
+            this.drawHorizonMist();
+            this.drawGrain();
+            
+            // Следующий кадр
+            requestAnimationFrame(() => this.animate());
         }
     }
     
@@ -730,8 +932,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // ИНИЦИАЛИЗАЦИЯ
     // ======================
     
-    // Инициализировать анимацию фона
-    initBackgroundAnimation();
+    // Инициализировать анимированный фон
+    const nightSky = new NightSkyBackground();
     
     // Загрузить текущий день
     loadDay(getTodayDateString());
@@ -759,7 +961,7 @@ document.addEventListener('DOMContentLoaded', function() {
             notification.style.zIndex = '1000';
             notification.style.maxWidth = '400px';
             notification.style.textAlign = 'center';
-            notification.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)';
+            notification.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3)';
             notification.innerHTML = `
                 <p style="margin-bottom: var(--spacing-sm); font-weight: 500;">Добро пожаловать в WIRD OS</p>
                 <p style="font-size: 0.9rem; opacity: 0.8;">Теперь вы можете просматривать и редактировать историю дней</p>
