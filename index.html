@@ -7,23 +7,14 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#0a1128">
     <meta name="description" content="Личная операционная система дисциплины верующего">
 </head>
 <body>
-    <!-- Animated Background -->
-    <div class="background">
-        <div class="background-blobs">
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-            <div class="blob blob-3"></div>
-            <div class="blob blob-4"></div>
-        </div>
-        <div class="background-grid"></div>
-        <div class="background-grain"></div>
-    </div>
+    <!-- Canvas для анимированного фона -->
+    <canvas id="bgCanvas"></canvas>
 
     <div class="container">
         <!-- Экран истории (скрыт по умолчанию) -->
