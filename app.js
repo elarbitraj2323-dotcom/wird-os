@@ -1,5 +1,5 @@
-// WIRD OS - Stage 1.1: История дней + редактирование (с фиксом удаления)
-// Полностью офлайн, данные хранятся в localStorage
+// WIRD OS - Stage 1.1: История дней + редактирование
+// С обновленным премиальным UI
 
 document.addEventListener('DOMContentLoaded', function() {
     // ======================
@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'wird_os_days';
     let currentDayData = null;
     let isEditing = false;
-    let currentViewDate = null;
+    let currentViewDate = null; // null = сегодня, иначе конкретная дата
     let isViewingHistory = false;
     
     // Структура данных дня
     const defaultDayData = {
         date: null,
-        status: 'active',
+        status: 'active', // 'active' или 'completed'
         updatedAt: null,
         ibadat: {
             quran: 0,
@@ -59,6 +59,46 @@ document.addEventListener('DOMContentLoaded', function() {
         { text: "Верующий не укушается дважды из одной норы.", source: "Хадис" },
         { text: "Будь в этом мире как странник или путник.", source: "Хадис" }
     ];
+    
+    // ======================
+    // ИНИЦИАЛИЗАЦИЯ АНИМАЦИИ ФОНА
+    // ======================
+    
+    function initBackgroundAnimation() {
+        // Проверяем настройки prefers-reduced-motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        if (!prefersReducedMotion) {
+            // Добавляем параллакс эффект для blobs при движении мыши
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                const blobs = document.querySelectorAll('.blob');
+                blobs.forEach((blob, index) => {
+                    const speed = 0.3 + (index * 0.1);
+                    const moveX = (x - 0.5) * 40 * speed;
+                    const moveY = (y - 0.5) * 40 * speed;
+                    
+                    blob.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                });
+            });
+            
+            // Анимация градиента сетки
+            const grid = document.querySelector('.background-grid');
+            let gridAngle = 0;
+            
+            function animateGrid() {
+                gridAngle = (gridAngle + 0.05) % 360;
+                grid.style.backgroundImage = 
+                    `linear-gradient(${gridAngle}deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+                     linear-gradient(${gridAngle + 90}deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px)`;
+                requestAnimationFrame(animateGrid);
+            }
+            
+            animateGrid();
+        }
+    }
     
     // ======================
     // ЭЛЕМЕНТЫ ДОМ
@@ -117,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const completedDaysCount = document.getElementById('completedDaysCount');
     
     // ======================
-    // УТИЛИТЫ (ИСПРАВЛЕННЫЕ)
+    // УТИЛИТЫ
     // ======================
     
     // Получить текущую дату в формате YYYY-MM-DD
@@ -160,127 +200,44 @@ document.addEventListener('DOMContentLoaded', function() {
         return dayOfYear % dailyQuotes.length;
     }
     
-    // ======================
-    // РАБОТА С LOCALSTORAGE (ИСПРАВЛЕННАЯ)
-    // ======================
-    
-    // Загрузить все дни из localStorage (ВСЕГДА ЧИТАЕТ СВЕЖИЕ ДАННЫЕ)
+    // Загрузить все дни из localStorage
     function loadAllDays() {
-        try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (!stored) return {};
-            
-            const days = JSON.parse(stored);
-            
-            // Удаляем дубликаты - оставляем только последнюю запись для каждой даты
-            const uniqueDays = {};
-            Object.keys(days).forEach(dateKey => {
-                // Проверяем корректность формата даты
-                if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
-                    uniqueDays[dateKey] = days[dateKey];
-                }
-            });
-            
-            // Если были некорректные ключи, сохраняем очищенную версию
-            if (Object.keys(days).length !== Object.keys(uniqueDays).length) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(uniqueDays));
-            }
-            
-            return uniqueDays;
-        } catch (error) {
-            console.error('Ошибка при загрузке дней:', error);
-            return {};
-        }
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : {};
     }
     
     // Сохранить все дни в localStorage
     function saveAllDays(days) {
-        try {
-            // Удаляем пустые и некорректные записи перед сохранением
-            const cleanDays = {};
-            Object.keys(days).forEach(key => {
-                if (days[key] && days[key].date && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
-                    cleanDays[key] = days[key];
-                }
-            });
-            
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanDays));
-            return true;
-        } catch (error) {
-            console.error('Ошибка при сохранении дней:', error);
-            return false;
-        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(days));
     }
     
-    // Получить данные дня (ВСЕГДА СВЕЖИЕ ИЗ LOCALSTORAGE)
+    // Получить данные дня
     function getDayData(dateString) {
-        const days = loadAllDays(); // Всегда читаем свежие данные
+        const days = loadAllDays();
         return days[dateString] || null;
     }
     
-    // Сохранить данные дня (ВСЕГДА ПРЯМОЕ СОХРАНЕНИЕ)
+    // Сохранить данные дня
     function saveDayData(dateString, data) {
-        if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            console.error('Некорректный формат даты:', dateString);
-            return false;
-        }
-        
-        const days = loadAllDays(); // Всегда читаем свежие данные
-        data.date = dateString;
+        const days = loadAllDays();
         data.updatedAt = new Date().toISOString();
         days[dateString] = data;
-        
-        return saveAllDays(days);
+        saveAllDays(days);
     }
     
-    // УДАЛЕНИЕ ДНЯ (ИСПРАВЛЕННОЕ) - УДАЛЯЕТ ИЗ LOCALSTORAGE НАВСЕГДА
+    // Удалить данные дня
     function deleteDayData(dateString) {
-        if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            console.error('Некорректный формат даты для удаления:', dateString);
-            return false;
-        }
-        
-        const days = loadAllDays(); // Всегда читаем свежие данные
-        
-        if (!days[dateString]) {
-            console.warn('День для удаления не найден:', dateString);
-            return false;
-        }
-        
-        // Удаляем день
+        const days = loadAllDays();
         delete days[dateString];
-        
-        // Сохраняем обновленные данные
-        const success = saveAllDays(days);
-        
-        if (success) {
-            // Двойная проверка: читаем данные снова и проверяем, что день удален
-            const updatedDays = loadAllDays();
-            if (updatedDays[dateString]) {
-                console.error('День не был удален из localStorage!');
-                return false;
-            }
-            return true;
-        }
-        
-        return false;
+        saveAllDays(days);
     }
     
-    // Получить список дней отсортированный по дате (новые первые) - ВСЕГДА СВЕЖИЕ ДАННЫЕ
+    // Получить список дней отсортированный по дате (новые первые)
     function getSortedDays() {
-        const days = loadAllDays(); // Всегда читаем свежие данные
-        
+        const days = loadAllDays();
         return Object.keys(days)
-            .filter(date => days[date] && days[date].date) // Фильтруем корректные записи
-            .sort((a, b) => b.localeCompare(a)) // Сортировка по убыванию (новые вперед)
-            .map(date => ({ 
-                date, 
-                ...days[date],
-                // Гарантируем что у всех записей есть все необходимые поля
-                ibadat: { ...defaultDayData.ibadat, ...(days[date].ibadat || {}) },
-                discipline: { ...defaultDayData.discipline, ...(days[date].discipline || {}) },
-                selfControl: { ...defaultDayData.selfControl, ...(days[date].selfControl || {}) }
-            }));
+            .sort((a, b) => b.localeCompare(a))
+            .map(date => ({ date, ...days[date] }));
     }
     
     // Показать уведомление
@@ -291,26 +248,26 @@ document.addEventListener('DOMContentLoaded', function() {
         status.textContent = message;
         
         if (type === 'success') {
-            status.style.color = '#27ae60';
+            status.style.color = 'var(--color-success)';
         } else if (type === 'error') {
-            status.style.color = '#e74c3c';
+            status.style.color = 'var(--color-failure)';
         } else {
-            status.style.color = '';
+            status.style.color = 'var(--color-secondary)';
         }
         
         setTimeout(() => {
             if (currentDayData) {
                 status.textContent = currentDayData.status === 'completed' ? 'День завершён' : 'День активен';
-                status.style.color = '';
+                status.style.color = currentDayData.status === 'completed' ? 'var(--color-success)' : 'var(--color-secondary)';
             }
         }, 2000);
     }
     
     // ======================
-    // УПРАВЛЕНИЕ ЭКРАНАМИ (ИСПРАВЛЕННОЕ)
+    // УПРАВЛЕНИЕ ЭКРАНАМИ
     // ======================
     
-    // Показать экран истории (ВСЕГДА СВЕЖИЕ ДАННЫЕ)
+    // Показать экран истории
     function showHistoryScreen() {
         todayScreen.style.display = 'none';
         historyScreen.style.display = 'block';
@@ -329,20 +286,20 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUI();
     }
     
-    // Обновить экран истории (ВСЕГДА СВЕЖИЕ ДАННЫЕ)
+    // Обновить экран истории
     function updateHistoryScreen() {
-        const days = getSortedDays(); // Всегда свежие данные
+        const days = getSortedDays();
         const total = days.length;
         const completed = days.filter(day => day.status === 'completed').length;
         
         // Обновить статистику
-        totalDaysCount.textContent = `${total} дней`;
-        completedDaysCount.textContent = `${completed} завершено`;
+        totalDaysCount.textContent = `${total}`;
+        completedDaysCount.textContent = `${completed}`;
         
         // Показать/скрыть кнопку "Копировать вчерашний день"
         const yesterday = getYesterdayDateString();
-        const yesterdayData = getDayData(yesterday); // Свежие данные
-        copyYesterdayButton.style.display = yesterdayData ? 'block' : 'none';
+        const yesterdayData = getDayData(yesterday);
+        copyYesterdayButton.style.display = yesterdayData ? 'flex' : 'none';
         
         // Очистить список
         daysList.innerHTML = '';
@@ -350,7 +307,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (days.length === 0) {
             daysList.innerHTML = `
                 <div class="empty-history">
-                    <div class="empty-icon">📅</div>
+                    <div class="empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </div>
                     <h3>История пуста</h3>
                     <p>Здесь будут появляться ваши завершённые и активные дни</p>
                 </div>
@@ -358,17 +322,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Добавить дни в список (убедимся, что нет дубликатов)
-        const processedDates = new Set();
-        
+        // Добавить дни в список
         days.forEach(day => {
-            // Защита от дубликатов
-            if (processedDates.has(day.date)) {
-                console.warn('Обнаружен дубликат даты, пропускаем:', day.date);
-                return;
-            }
-            processedDates.add(day.date);
-            
             const dayCard = document.createElement('div');
             dayCard.className = 'day-card glass-card';
             dayCard.dataset.date = day.date;
@@ -399,12 +354,30 @@ document.addEventListener('DOMContentLoaded', function() {
     // Создать сводку дня для истории
     function createDaySummary(day) {
         const items = [
-            { icon: '📖', text: `Коран: ${day.ibadat.quran}` },
-            { icon: '📿', text: `Салават: ${day.ibadat.salawat}` },
-            { icon: '😴', text: `Сон: ${day.discipline.sleep}ч` },
-            { icon: '💪', text: `Спорт: ${day.discipline.sport ? '✅' : '❌'}` },
-            { icon: '🤲', text: `Садака: ${day.ibadat.sadaka ? '✅' : '❌'}` },
-            { icon: '🌅', text: `Азкар: ${day.ibadat.azkarMorning ? 'У' : ''}${day.ibadat.azkarEvening ? 'В' : ''}` }
+            { 
+                icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+                text: `Коран: ${day.ibadat.quran}`
+            },
+            { 
+                icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>',
+                text: `Салават: ${day.ibadat.salawat}`
+            },
+            { 
+                icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+                text: `Сон: ${day.discipline.sleep}ч`
+            },
+            { 
+                icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>',
+                text: `Спорт: ${day.discipline.sport ? 'Да' : 'Нет'}`
+            },
+            { 
+                icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>',
+                text: `Садака: ${day.ibadat.sadaka ? 'Да' : 'Нет'}`
+            },
+            { 
+                icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>',
+                text: `Азкар: ${day.ibadat.azkarMorning ? 'У' : ''}${day.ibadat.azkarEvening ? 'В' : ''}`
+            }
         ];
         
         return items.map(item => `
@@ -416,15 +389,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ======================
-    // УПРАВЛЕНИЕ ДНЕМ (ИСПРАВЛЕННОЕ)
+    // УПРАВЛЕНИЕ ДНЕМ
     // ======================
     
-    // Загрузить день (ВСЕГДА СВЕЖИЕ ДАННЫЕ)
+    // Загрузить день
     function loadDay(dateString) {
         const today = getTodayDateString();
         const isToday = dateString === today;
         
-        // Получить данные дня (всегда свежие)
+        // Получить данные дня
         let dayData = getDayData(dateString);
         
         if (!dayData) {
@@ -441,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     dayData.ibadat = { ...yesterdayData.ibadat };
                     dayData.discipline = { ...yesterdayData.discipline };
                     dayData.selfControl = { ...yesterdayData.selfControl };
-                    dayData.ibadat.salawat = 0;
+                    dayData.ibadat.salawat = 0; // Сбросить салават
                 }
             }
             
@@ -461,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновить поля формы
         updateFormFromData();
         
-        // Обновить UI
+        // Обновить UI в зависимости от статуса
         updateUI();
     }
     
@@ -525,11 +498,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const isCompleted = currentDayData.status === 'completed';
         
         // Показать/скрыть индикатор просмотра истории
-        viewingHistoryIndicator.style.display = isViewingHistory ? 'block' : 'none';
+        viewingHistoryIndicator.style.display = isViewingHistory ? 'flex' : 'none';
         
         // Обновить статус дня
         dayStatusElement.textContent = isCompleted ? 'День завершён' : 'День активен';
-        dayStatusElement.style.color = isCompleted ? '#27ae60' : '';
+        dayStatusElement.style.color = isCompleted ? 'var(--color-success)' : 'var(--color-secondary)';
         
         // Управление блокировкой полей
         const shouldLockFields = isCompleted && !isEditing;
@@ -548,15 +521,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = shouldLockFields;
         });
         
-        // Обновить текст чекбоксов
-        document.querySelectorAll('.checkbox-label').forEach(label => {
-            if (shouldLockFields) {
-                label.classList.add('disabled');
-            } else {
-                label.classList.remove('disabled');
-            }
-        });
-        
         // Управление кнопками действий
         completeDayButton.style.display = (!isCompleted && isToday && !isEditing) ? 'flex' : 'none';
         editDayButton.style.display = (isCompleted && !isEditing) ? 'flex' : 'none';
@@ -567,10 +531,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Заблокировать кнопку завершения дня если сегодня уже завершён
         if (isCompleted && isToday) {
             completeDayButton.disabled = true;
-            completeDayButton.innerHTML = '<span class="btn-text">День завершён</span><span class="btn-icon">✓</span>';
+            completeDayButton.innerHTML = '<span class="btn-text">День завершён</span><span class="btn-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
         } else {
             completeDayButton.disabled = false;
-            completeDayButton.innerHTML = '<span class="btn-text">Завершить день</span><span class="btn-icon">✓</span>';
+            completeDayButton.innerHTML = '<span class="btn-text">Завершить день</span><span class="btn-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg></span>';
         }
     }
     
@@ -591,10 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.disabled = false;
         });
         
-        document.querySelectorAll('.checkbox-label').forEach(label => {
-            label.classList.remove('disabled');
-        });
-        
         updateUI();
     }
     
@@ -610,15 +570,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentDayData) return;
         
         updateDataFromForm();
-        const success = saveDayData(currentViewDate, currentDayData);
+        saveDayData(currentViewDate, currentDayData);
         
-        if (success) {
-            isEditing = false;
-            updateUI();
-            showNotification('Изменения сохранены', 'success');
-        } else {
-            showNotification('Ошибка сохранения', 'error');
-        }
+        isEditing = false;
+        updateUI();
+        
+        showNotification('Изменения сохранены', 'success');
     }
     
     // Завершить день
@@ -630,44 +587,21 @@ document.addEventListener('DOMContentLoaded', function() {
             currentDayData.status = 'completed';
             currentDayData.updatedAt = new Date().toISOString();
             
-            const success = saveDayData(currentViewDate, currentDayData);
+            saveDayData(currentViewDate, currentDayData);
+            updateUI();
             
-            if (success) {
-                updateUI();
-                showNotification('День успешно завершён', 'success');
-            } else {
-                showNotification('Ошибка сохранения', 'error');
-            }
+            showNotification('День успешно завершён', 'success');
         }
     }
     
-    // УДАЛЕНИЕ ДНЯ (ИСПРАВЛЕННОЕ)
+    // Удалить день
     function deleteDay() {
-        if (!currentDayData || !currentViewDate) return;
+        if (!currentDayData) return;
         
         if (confirm(`Удалить запись за ${formatDateForDisplay(currentViewDate)}? Это действие нельзя отменить.`)) {
-            // Удаляем день из localStorage
-            const success = deleteDayData(currentViewDate);
-            
-            if (success) {
-                showNotification('Запись удалена', 'success');
-                
-                // Сбрасываем текущие данные
-                currentDayData = null;
-                currentViewDate = null;
-                isViewingHistory = false;
-                isEditing = false;
-                
-                // Если мы на экране истории - обновляем ее
-                if (historyScreen.style.display === 'block') {
-                    updateHistoryScreen(); // Перерендериваем историю из свежих данных
-                } else {
-                    // Если мы на экране дня - возвращаемся в историю
-                    showHistoryScreen();
-                }
-            } else {
-                showNotification('Ошибка удаления записи', 'error');
-            }
+            deleteDayData(currentViewDate);
+            showNotification('Запись удалена', 'success');
+            showHistoryScreen();
         }
     }
     
@@ -681,16 +615,12 @@ document.addEventListener('DOMContentLoaded', function() {
             currentDayData.ibadat = { ...yesterdayData.ibadat };
             currentDayData.discipline = { ...yesterdayData.discipline };
             currentDayData.selfControl = { ...yesterdayData.selfControl };
-            currentDayData.ibadat.salawat = 0;
+            currentDayData.ibadat.salawat = 0; // Сбросить салават
             
             updateFormFromData();
-            const success = saveDayData(currentViewDate, currentDayData);
+            saveDayData(currentViewDate, currentDayData);
             
-            if (success) {
-                showNotification('Данные скопированы', 'success');
-            } else {
-                showNotification('Ошибка сохранения', 'error');
-            }
+            showNotification('Данные скопированы', 'success');
         }
     }
     
@@ -800,6 +730,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ИНИЦИАЛИЗАЦИЯ
     // ======================
     
+    // Инициализировать анимацию фона
+    initBackgroundAnimation();
+    
     // Загрузить текущий день
     loadDay(getTodayDateString());
     
@@ -810,4 +743,34 @@ document.addEventListener('DOMContentLoaded', function() {
             saveDayData(currentViewDate, currentDayData);
         }
     });
+    
+    // Показать уведомление о первом запуске
+    const firstRun = !localStorage.getItem('wirdos_first_run');
+    if (firstRun) {
+        localStorage.setItem('wirdos_first_run', 'true');
+        setTimeout(() => {
+            const notification = document.createElement('div');
+            notification.className = 'glass-card';
+            notification.style.position = 'fixed';
+            notification.style.bottom = '20px';
+            notification.style.left = '50%';
+            notification.style.transform = 'translateX(-50%)';
+            notification.style.padding = 'var(--spacing-md) var(--spacing-lg)';
+            notification.style.zIndex = '1000';
+            notification.style.maxWidth = '400px';
+            notification.style.textAlign = 'center';
+            notification.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.1)';
+            notification.innerHTML = `
+                <p style="margin-bottom: var(--spacing-sm); font-weight: 500;">Добро пожаловать в WIRD OS</p>
+                <p style="font-size: 0.9rem; opacity: 0.8;">Теперь вы можете просматривать и редактировать историю дней</p>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(-50%) translateY(20px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }, 1000);
+    }
 });
