@@ -1,4 +1,4 @@
-// WIRD OS - Stage 1.1: История дней + редактирование
+// WIRD OS - Stage 1.1: История дней + редактирование (с фиксом удаления)
 // Полностью офлайн, данные хранятся в localStorage
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -9,13 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const STORAGE_KEY = 'wird_os_days';
     let currentDayData = null;
     let isEditing = false;
-    let currentViewDate = null; // null = сегодня, иначе конкретная дата
+    let currentViewDate = null;
     let isViewingHistory = false;
     
     // Структура данных дня
     const defaultDayData = {
         date: null,
-        status: 'active', // 'active' или 'completed'
+        status: 'active',
         updatedAt: null,
         ibadat: {
             quran: 0,
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const completedDaysCount = document.getElementById('completedDaysCount');
     
     // ======================
-    // УТИЛИТЫ
+    // УТИЛИТЫ (ИСПРАВЛЕННЫЕ)
     // ======================
     
     // Получить текущую дату в формате YYYY-MM-DD
@@ -160,44 +160,127 @@ document.addEventListener('DOMContentLoaded', function() {
         return dayOfYear % dailyQuotes.length;
     }
     
-    // Загрузить все дни из localStorage
+    // ======================
+    // РАБОТА С LOCALSTORAGE (ИСПРАВЛЕННАЯ)
+    // ======================
+    
+    // Загрузить все дни из localStorage (ВСЕГДА ЧИТАЕТ СВЕЖИЕ ДАННЫЕ)
     function loadAllDays() {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : {};
+        try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (!stored) return {};
+            
+            const days = JSON.parse(stored);
+            
+            // Удаляем дубликаты - оставляем только последнюю запись для каждой даты
+            const uniqueDays = {};
+            Object.keys(days).forEach(dateKey => {
+                // Проверяем корректность формата даты
+                if (/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
+                    uniqueDays[dateKey] = days[dateKey];
+                }
+            });
+            
+            // Если были некорректные ключи, сохраняем очищенную версию
+            if (Object.keys(days).length !== Object.keys(uniqueDays).length) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(uniqueDays));
+            }
+            
+            return uniqueDays;
+        } catch (error) {
+            console.error('Ошибка при загрузке дней:', error);
+            return {};
+        }
     }
     
     // Сохранить все дни в localStorage
     function saveAllDays(days) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(days));
+        try {
+            // Удаляем пустые и некорректные записи перед сохранением
+            const cleanDays = {};
+            Object.keys(days).forEach(key => {
+                if (days[key] && days[key].date && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                    cleanDays[key] = days[key];
+                }
+            });
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanDays));
+            return true;
+        } catch (error) {
+            console.error('Ошибка при сохранении дней:', error);
+            return false;
+        }
     }
     
-    // Получить данные дня
+    // Получить данные дня (ВСЕГДА СВЕЖИЕ ИЗ LOCALSTORAGE)
     function getDayData(dateString) {
-        const days = loadAllDays();
+        const days = loadAllDays(); // Всегда читаем свежие данные
         return days[dateString] || null;
     }
     
-    // Сохранить данные дня
+    // Сохранить данные дня (ВСЕГДА ПРЯМОЕ СОХРАНЕНИЕ)
     function saveDayData(dateString, data) {
-        const days = loadAllDays();
+        if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            console.error('Некорректный формат даты:', dateString);
+            return false;
+        }
+        
+        const days = loadAllDays(); // Всегда читаем свежие данные
+        data.date = dateString;
         data.updatedAt = new Date().toISOString();
         days[dateString] = data;
-        saveAllDays(days);
+        
+        return saveAllDays(days);
     }
     
-    // Удалить данные дня
+    // УДАЛЕНИЕ ДНЯ (ИСПРАВЛЕННОЕ) - УДАЛЯЕТ ИЗ LOCALSTORAGE НАВСЕГДА
     function deleteDayData(dateString) {
-        const days = loadAllDays();
+        if (!dateString || !/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            console.error('Некорректный формат даты для удаления:', dateString);
+            return false;
+        }
+        
+        const days = loadAllDays(); // Всегда читаем свежие данные
+        
+        if (!days[dateString]) {
+            console.warn('День для удаления не найден:', dateString);
+            return false;
+        }
+        
+        // Удаляем день
         delete days[dateString];
-        saveAllDays(days);
+        
+        // Сохраняем обновленные данные
+        const success = saveAllDays(days);
+        
+        if (success) {
+            // Двойная проверка: читаем данные снова и проверяем, что день удален
+            const updatedDays = loadAllDays();
+            if (updatedDays[dateString]) {
+                console.error('День не был удален из localStorage!');
+                return false;
+            }
+            return true;
+        }
+        
+        return false;
     }
     
-    // Получить список дней отсортированный по дате (новые первые)
+    // Получить список дней отсортированный по дате (новые первые) - ВСЕГДА СВЕЖИЕ ДАННЫЕ
     function getSortedDays() {
-        const days = loadAllDays();
+        const days = loadAllDays(); // Всегда читаем свежие данные
+        
         return Object.keys(days)
-            .sort((a, b) => b.localeCompare(a))
-            .map(date => ({ date, ...days[date] }));
+            .filter(date => days[date] && days[date].date) // Фильтруем корректные записи
+            .sort((a, b) => b.localeCompare(a)) // Сортировка по убыванию (новые вперед)
+            .map(date => ({ 
+                date, 
+                ...days[date],
+                // Гарантируем что у всех записей есть все необходимые поля
+                ibadat: { ...defaultDayData.ibadat, ...(days[date].ibadat || {}) },
+                discipline: { ...defaultDayData.discipline, ...(days[date].discipline || {}) },
+                selfControl: { ...defaultDayData.selfControl, ...(days[date].selfControl || {}) }
+            }));
     }
     
     // Показать уведомление
@@ -224,10 +307,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ======================
-    // УПРАВЛЕНИЕ ЭКРАНАМИ
+    // УПРАВЛЕНИЕ ЭКРАНАМИ (ИСПРАВЛЕННОЕ)
     // ======================
     
-    // Показать экран истории
+    // Показать экран истории (ВСЕГДА СВЕЖИЕ ДАННЫЕ)
     function showHistoryScreen() {
         todayScreen.style.display = 'none';
         historyScreen.style.display = 'block';
@@ -246,9 +329,9 @@ document.addEventListener('DOMContentLoaded', function() {
         updateUI();
     }
     
-    // Обновить экран истории
+    // Обновить экран истории (ВСЕГДА СВЕЖИЕ ДАННЫЕ)
     function updateHistoryScreen() {
-        const days = getSortedDays();
+        const days = getSortedDays(); // Всегда свежие данные
         const total = days.length;
         const completed = days.filter(day => day.status === 'completed').length;
         
@@ -258,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Показать/скрыть кнопку "Копировать вчерашний день"
         const yesterday = getYesterdayDateString();
-        const yesterdayData = getDayData(yesterday);
+        const yesterdayData = getDayData(yesterday); // Свежие данные
         copyYesterdayButton.style.display = yesterdayData ? 'block' : 'none';
         
         // Очистить список
@@ -275,8 +358,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Добавить дни в список
+        // Добавить дни в список (убедимся, что нет дубликатов)
+        const processedDates = new Set();
+        
         days.forEach(day => {
+            // Защита от дубликатов
+            if (processedDates.has(day.date)) {
+                console.warn('Обнаружен дубликат даты, пропускаем:', day.date);
+                return;
+            }
+            processedDates.add(day.date);
+            
             const dayCard = document.createElement('div');
             dayCard.className = 'day-card glass-card';
             dayCard.dataset.date = day.date;
@@ -324,15 +416,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // ======================
-    // УПРАВЛЕНИЕ ДНЕМ
+    // УПРАВЛЕНИЕ ДНЕМ (ИСПРАВЛЕННОЕ)
     // ======================
     
-    // Загрузить день
+    // Загрузить день (ВСЕГДА СВЕЖИЕ ДАННЫЕ)
     function loadDay(dateString) {
         const today = getTodayDateString();
         const isToday = dateString === today;
         
-        // Получить данные дня
+        // Получить данные дня (всегда свежие)
         let dayData = getDayData(dateString);
         
         if (!dayData) {
@@ -349,7 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     dayData.ibadat = { ...yesterdayData.ibadat };
                     dayData.discipline = { ...yesterdayData.discipline };
                     dayData.selfControl = { ...yesterdayData.selfControl };
-                    dayData.ibadat.salawat = 0; // Сбросить салават
+                    dayData.ibadat.salawat = 0;
                 }
             }
             
@@ -369,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Обновить поля формы
         updateFormFromData();
         
-        // Обновить UI в зависимости от статуса
+        // Обновить UI
         updateUI();
     }
     
@@ -518,12 +610,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!currentDayData) return;
         
         updateDataFromForm();
-        saveDayData(currentViewDate, currentDayData);
+        const success = saveDayData(currentViewDate, currentDayData);
         
-        isEditing = false;
-        updateUI();
-        
-        showNotification('Изменения сохранены', 'success');
+        if (success) {
+            isEditing = false;
+            updateUI();
+            showNotification('Изменения сохранены', 'success');
+        } else {
+            showNotification('Ошибка сохранения', 'error');
+        }
     }
     
     // Завершить день
@@ -535,21 +630,44 @@ document.addEventListener('DOMContentLoaded', function() {
             currentDayData.status = 'completed';
             currentDayData.updatedAt = new Date().toISOString();
             
-            saveDayData(currentViewDate, currentDayData);
-            updateUI();
+            const success = saveDayData(currentViewDate, currentDayData);
             
-            showNotification('День успешно завершён', 'success');
+            if (success) {
+                updateUI();
+                showNotification('День успешно завершён', 'success');
+            } else {
+                showNotification('Ошибка сохранения', 'error');
+            }
         }
     }
     
-    // Удалить день
+    // УДАЛЕНИЕ ДНЯ (ИСПРАВЛЕННОЕ)
     function deleteDay() {
-        if (!currentDayData) return;
+        if (!currentDayData || !currentViewDate) return;
         
         if (confirm(`Удалить запись за ${formatDateForDisplay(currentViewDate)}? Это действие нельзя отменить.`)) {
-            deleteDayData(currentViewDate);
-            showNotification('Запись удалена', 'success');
-            showHistoryScreen();
+            // Удаляем день из localStorage
+            const success = deleteDayData(currentViewDate);
+            
+            if (success) {
+                showNotification('Запись удалена', 'success');
+                
+                // Сбрасываем текущие данные
+                currentDayData = null;
+                currentViewDate = null;
+                isViewingHistory = false;
+                isEditing = false;
+                
+                // Если мы на экране истории - обновляем ее
+                if (historyScreen.style.display === 'block') {
+                    updateHistoryScreen(); // Перерендериваем историю из свежих данных
+                } else {
+                    // Если мы на экране дня - возвращаемся в историю
+                    showHistoryScreen();
+                }
+            } else {
+                showNotification('Ошибка удаления записи', 'error');
+            }
         }
     }
     
@@ -563,12 +681,16 @@ document.addEventListener('DOMContentLoaded', function() {
             currentDayData.ibadat = { ...yesterdayData.ibadat };
             currentDayData.discipline = { ...yesterdayData.discipline };
             currentDayData.selfControl = { ...yesterdayData.selfControl };
-            currentDayData.ibadat.salawat = 0; // Сбросить салават
+            currentDayData.ibadat.salawat = 0;
             
             updateFormFromData();
-            saveDayData(currentViewDate, currentDayData);
+            const success = saveDayData(currentViewDate, currentDayData);
             
-            showNotification('Данные скопированы', 'success');
+            if (success) {
+                showNotification('Данные скопированы', 'success');
+            } else {
+                showNotification('Ошибка сохранения', 'error');
+            }
         }
     }
     
@@ -688,13 +810,4 @@ document.addEventListener('DOMContentLoaded', function() {
             saveDayData(currentViewDate, currentDayData);
         }
     });
-    
-    // Показать уведомление о первом запуске
-    const firstRun = !localStorage.getItem('wirdos_first_run');
-    if (firstRun) {
-        localStorage.setItem('wirdos_first_run', 'true');
-        setTimeout(() => {
-            alert('Добро пожаловать в WIRD OS. Теперь вы можете просматривать и редактировать историю дней.');
-        }, 1000);
-    }
 });
