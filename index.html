@@ -14,166 +14,227 @@
 </head>
 <body>
     <div class="container">
-        <header class="header">
-            <h1 class="app-title">WIRD OS</h1>
-            <div class="date-display" id="currentDate"></div>
-        </header>
+        <!-- Экран истории (скрыт по умолчанию) -->
+        <div id="historyScreen" class="screen history-screen" style="display: none;">
+            <header class="header">
+                <button id="backToTodayBtn" class="back-btn">
+                    ← Назад
+                </button>
+                <h1 class="app-title">История дней</h1>
+            </header>
 
-        <main class="main-content">
-            <!-- Аят/Цитата дня -->
-            <section class="daily-quote-section">
-                <div class="quote-card glass-card">
-                    <div class="quote-content">
-                        <p id="dailyQuoteText">Загружаем цитату дня...</p>
-                        <p id="dailyQuoteSource" class="quote-source"></p>
+            <main class="history-content">
+                <div class="history-controls">
+                    <div class="history-stats">
+                        <span id="totalDaysCount">0 дней</span>
+                        <span id="completedDaysCount">0 завершено</span>
+                    </div>
+                    <button id="copyYesterdayBtn" class="secondary-btn" style="display: none;">
+                        Копировать вчера
+                    </button>
+                </div>
+
+                <div class="days-list" id="daysList">
+                    <!-- Дни будут загружаться динамически -->
+                    <div class="empty-history">
+                        <div class="empty-icon">📅</div>
+                        <h3>История пуста</h3>
+                        <p>Здесь будут появляться ваши завершённые и активные дни</p>
                     </div>
                 </div>
-            </section>
+            </main>
+        </div>
 
-            <!-- Блоки дня -->
-            <div class="blocks-container">
-                <!-- Ибадат -->
-                <section class="block-section">
-                    <h2 class="block-title">🕌 Ибадат</h2>
-                    <div class="block-content glass-card">
-                        <!-- Коран -->
-                        <div class="input-group">
-                            <label class="input-label">Коран (страниц)</label>
-                            <div class="number-input-container">
-                                <button class="number-btn minus" data-action="quran-decrease">-</button>
-                                <input type="number" id="quranInput" class="number-input" min="0" max="30" value="0">
-                                <button class="number-btn plus" data-action="quran-increase">+</button>
-                            </div>
-                        </div>
+        <!-- Главный экран (Сегодня) -->
+        <div id="todayScreen" class="screen today-screen">
+            <header class="header">
+                <div class="header-left">
+                    <h1 class="app-title">WIRD OS</h1>
+                    <div class="date-display" id="currentDate"></div>
+                </div>
+                <div class="header-right">
+                    <button id="historyBtn" class="history-btn">
+                        История
+                    </button>
+                </div>
+            </header>
 
-                        <!-- Азкар -->
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="azkarMorning">
-                                <label for="azkarMorning" class="checkbox-label">Азкар утро</label>
-                            </div>
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="azkarEvening">
-                                <label for="azkarEvening" class="checkbox-label">Азкар вечер</label>
-                            </div>
-                        </div>
-
-                        <!-- Салават -->
-                        <div class="input-group">
-                            <label class="input-label">Салават</label>
-                            <div class="counter-container">
-                                <div class="counter-display" id="salawatCount">0</div>
-                                <div class="counter-buttons">
-                                    <button class="counter-btn" data-action="salawat-add" data-amount="1">+1</button>
-                                    <button class="counter-btn" data-action="salawat-add" data-amount="10">+10</button>
-                                    <button class="counter-btn" data-action="salawat-add" data-amount="33">+33</button>
-                                    <button class="counter-btn" data-action="salawat-add" data-amount="100">+100</button>
-                                </div>
-                                <button class="counter-reset" id="resetSalawat">Сбросить</button>
-                            </div>
-                        </div>
-
-                        <!-- Садака -->
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="sadaka">
-                                <label for="sadaka" class="checkbox-label">Садака</label>
-                            </div>
+            <main class="main-content">
+                <!-- Аят/Цитата дня -->
+                <section class="daily-quote-section">
+                    <div class="quote-card glass-card">
+                        <div class="quote-content">
+                            <p id="dailyQuoteText">Загружаем цитату дня...</p>
+                            <p id="dailyQuoteSource" class="quote-source"></p>
                         </div>
                     </div>
                 </section>
 
-                <!-- Дисциплина -->
-                <section class="block-section">
-                    <h2 class="block-title">🧠 Дисциплина</h2>
-                    <div class="block-content glass-card">
-                        <!-- Сон -->
-                        <div class="input-group">
-                            <label class="input-label">Сон (часов)</label>
-                            <div class="number-input-container">
-                                <button class="number-btn minus" data-action="sleep-decrease">-</button>
-                                <input type="number" id="sleepInput" class="number-input" min="0" max="24" value="0" step="0.5">
-                                <button class="number-btn plus" data-action="sleep-increase">+</button>
+                <!-- Блоки дня -->
+                <div class="blocks-container">
+                    <!-- Ибадат -->
+                    <section class="block-section">
+                        <h2 class="block-title">🕌 Ибадат</h2>
+                        <div class="block-content glass-card">
+                            <!-- Коран -->
+                            <div class="input-group">
+                                <label class="input-label">Коран (страниц)</label>
+                                <div class="number-input-container">
+                                    <button class="number-btn minus" data-action="quran-decrease">-</button>
+                                    <input type="number" id="quranInput" class="number-input" min="0" max="30" value="0">
+                                    <button class="number-btn plus" data-action="quran-increase">+</button>
+                                </div>
+                            </div>
+
+                            <!-- Азкар -->
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="azkarMorning">
+                                    <label for="azkarMorning" class="checkbox-label">Азкар утро</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="azkarEvening">
+                                    <label for="azkarEvening" class="checkbox-label">Азкар вечер</label>
+                                </div>
+                            </div>
+
+                            <!-- Салават -->
+                            <div class="input-group">
+                                <label class="input-label">Салават</label>
+                                <div class="counter-container">
+                                    <div class="counter-display" id="salawatCount">0</div>
+                                    <div class="counter-buttons">
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="1">+1</button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="10">+10</button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="33">+33</button>
+                                        <button class="counter-btn" data-action="salawat-add" data-amount="100">+100</button>
+                                    </div>
+                                    <button class="counter-reset" id="resetSalawat">Сбросить</button>
+                                </div>
+                            </div>
+
+                            <!-- Садака -->
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="sadaka">
+                                    <label for="sadaka" class="checkbox-label">Садака</label>
+                                </div>
                             </div>
                         </div>
+                    </section>
 
-                        <!-- Спорт -->
-                        <div class="checkbox-group">
-                            <div class="checkbox-item">
-                                <input type="checkbox" id="sport">
-                                <label for="sport" class="checkbox-label">Спорт</label>
+                    <!-- Дисциплина -->
+                    <section class="block-section">
+                        <h2 class="block-title">🧠 Дисциплина</h2>
+                        <div class="block-content glass-card">
+                            <!-- Сон -->
+                            <div class="input-group">
+                                <label class="input-label">Сон (часов)</label>
+                                <div class="number-input-container">
+                                    <button class="number-btn minus" data-action="sleep-decrease">-</button>
+                                    <input type="number" id="sleepInput" class="number-input" min="0" max="24" value="0" step="0.5">
+                                    <button class="number-btn plus" data-action="sleep-increase">+</button>
+                                </div>
+                            </div>
+
+                            <!-- Спорт -->
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="sport">
+                                    <label for="sport" class="checkbox-label">Спорт</label>
+                                </div>
+                            </div>
+
+                            <!-- Фокус дня -->
+                            <div class="input-group">
+                                <label class="input-label">Фокус дня</label>
+                                <input type="text" id="focusInput" class="text-input" placeholder="Одна важная задача на сегодня...">
                             </div>
                         </div>
+                    </section>
 
-                        <!-- Фокус дня -->
-                        <div class="input-group">
-                            <label class="input-label">Фокус дня</label>
-                            <input type="text" id="focusInput" class="text-input" placeholder="Одна важная задача на сегодня...">
+                    <!-- Самоконтроль -->
+                    <section class="block-section">
+                        <h2 class="block-title">🤍 Самоконтроль</h2>
+                        <div class="block-content glass-card">
+                            <div class="self-control-group">
+                                <!-- Язык -->
+                                <div class="self-control-item">
+                                    <span class="self-control-label">Язык</span>
+                                    <div class="toggle-group">
+                                        <button class="toggle-btn success" data-action="self-control" data-type="language" data-value="preserved">
+                                            Сохранил
+                                        </button>
+                                        <button class="toggle-btn failure" data-action="self-control" data-type="language" data-value="failed">
+                                            Сорвался
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Взгляд -->
+                                <div class="self-control-item">
+                                    <span class="self-control-label">Взгляд</span>
+                                    <div class="toggle-group">
+                                        <button class="toggle-btn success" data-action="self-control" data-type="gaze" data-value="preserved">
+                                            Сохранил
+                                        </button>
+                                        <button class="toggle-btn failure" data-action="self-control" data-type="gaze" data-value="failed">
+                                            Сорвался
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Гнев -->
+                                <div class="self-control-item">
+                                    <span class="self-control-label">Гнев</span>
+                                    <div class="toggle-group">
+                                        <button class="toggle-btn success" data-action="self-control" data-type="anger" data-value="preserved">
+                                            Сохранил
+                                        </button>
+                                        <button class="toggle-btn failure" data-action="self-control" data-type="anger" data-value="failed">
+                                            Сорвался
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Кнопки управления -->
+                <div class="action-section">
+                    <div class="day-info">
+                        <div class="day-status" id="dayStatus">День активен</div>
+                        <div id="viewingHistoryIndicator" class="history-indicator" style="display: none;">
+                            Просмотр записи из истории
                         </div>
                     </div>
-                </section>
-
-                <!-- Самоконтроль -->
-                <section class="block-section">
-                    <h2 class="block-title">🤍 Самоконтроль</h2>
-                    <div class="block-content glass-card">
-                        <div class="self-control-group">
-                            <!-- Язык -->
-                            <div class="self-control-item">
-                                <span class="self-control-label">Язык</span>
-                                <div class="toggle-group">
-                                    <button class="toggle-btn success" data-action="self-control" data-type="language" data-value="preserved">
-                                        Сохранил
-                                    </button>
-                                    <button class="toggle-btn failure" data-action="self-control" data-type="language" data-value="failed">
-                                        Сорвался
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Взгляд -->
-                            <div class="self-control-item">
-                                <span class="self-control-label">Взгляд</span>
-                                <div class="toggle-group">
-                                    <button class="toggle-btn success" data-action="self-control" data-type="gaze" data-value="preserved">
-                                        Сохранил
-                                    </button>
-                                    <button class="toggle-btn failure" data-action="self-control" data-type="gaze" data-value="failed">
-                                        Сорвался
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Гнев -->
-                            <div class="self-control-item">
-                                <span class="self-control-label">Гнев</span>
-                                <div class="toggle-group">
-                                    <button class="toggle-btn success" data-action="self-control" data-type="anger" data-value="preserved">
-                                        Сохранил
-                                    </button>
-                                    <button class="toggle-btn failure" data-action="self-control" data-type="anger" data-value="failed">
-                                        Сорвался
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    
+                    <div class="action-buttons">
+                        <button id="deleteDayBtn" class="delete-btn" style="display: none;">
+                            Удалить
+                        </button>
+                        <button id="editDayBtn" class="edit-btn" style="display: none;">
+                            Редактировать
+                        </button>
+                        <button id="cancelEditBtn" class="cancel-btn" style="display: none;">
+                            Отменить
+                        </button>
+                        <button id="saveChangesBtn" class="save-btn" style="display: none;">
+                            Сохранить
+                        </button>
+                        <button id="completeDayBtn" class="complete-day-btn">
+                            <span class="btn-text">Завершить день</span>
+                            <span class="btn-icon">✓</span>
+                        </button>
                     </div>
-                </section>
-            </div>
+                </div>
+            </main>
 
-            <!-- Кнопка завершения дня -->
-            <div class="action-section">
-                <button id="completeDayBtn" class="complete-day-btn">
-                    <span class="btn-text">Завершить день</span>
-                    <span class="btn-icon">✓</span>
-                </button>
-                <div class="day-status" id="dayStatus">День активен</div>
-            </div>
-        </main>
-
-        <footer class="footer">
-            <div class="footer-text">WIRD OS — Личная операционная система дисциплины</div>
-        </footer>
+            <footer class="footer">
+                <div class="footer-text">WIRD OS — Личная операционная система дисциплины</div>
+            </footer>
+        </div>
     </div>
 
     <script src="app.js"></script>
